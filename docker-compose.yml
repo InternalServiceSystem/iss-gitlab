@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+  gitlab:
+    image: 'gitlab/gitlab-ce:13.1.4-ce.0'
+    restart: always
+    hostname: '${GITLAB_FQDN}'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'https://${GITLAB_FQDN}';
+        gitlab_rails['lfs_enabled'] = true;
+        gitlab_rails['gitlab_shell_ssh_port'] = 2022
+        # Add any other gitlab.rb configuration here, each on its own line
+    expose:
+      - 80
+      - 22
+    ports:
+      - '2022:22'
+    volumes:
+      - 'config:/etc/gitlab'
+      - 'logs:/var/log/gitlab'
+      - 'data:/var/opt/gitlab'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.recipes.rule=Host(`gitlab.internal.murawsky.net`)"
+      - "traefik.http.routers.recipes.entrypoints=websecure"
+      - "traefik.http.routers.recipes.tls.certresolver=letsencrypt"
+      - "traefik.port=80"
+    networks:
+      - web
+    restart: "always"
+
+networks:
+  web:
+    external: true
+
